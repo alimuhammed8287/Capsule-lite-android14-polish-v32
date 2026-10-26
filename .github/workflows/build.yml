@@ -1,0 +1,42 @@
+name: Build Capsule Lite APK
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Validate Android manifest XML
+        run: python3 -c "import xml.etree.ElementTree as ET; ET.parse('app/src/main/AndroidManifest.xml'); print('Manifest XML OK')"
+
+      - name: Compile debug APK
+        run: gradle --no-daemon --stacktrace assembleDebug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: capsule-lite-v35-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
